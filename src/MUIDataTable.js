@@ -149,8 +149,8 @@ class MUIDataTable extends React.Component {
         separator: PropTypes.string,
         filterOptions: PropTypes.shape({
           useDisplayedColumnsOnly: PropTypes.bool,
-          useDisplayedRowsOnly: PropTypes.bool
-        })
+          useDisplayedRowsOnly: PropTypes.bool,
+        }),
       }),
       onDownload: PropTypes.func,
     }),
