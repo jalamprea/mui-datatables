@@ -95,24 +95,32 @@ class TableToolbar extends React.Component {
   }
 
   handleCSVDownload = () => {
-    const { data, displayData, columns, options } = this.props;
-    let dataToDownload = data;
-    let columnsToDownload = columns;
+    const { data, displayData, expandedRows, columns, options } = this.props;
+    let dataToDownload = [...data];
+    let columnsToDownload = [...columns];
 
     if (options.downloadOptions && options.downloadOptions.filterOptions) {
       // check rows first:
       if (options.downloadOptions.filterOptions.useDisplayedRowsOnly) {
-        dataToDownload = displayData;
+        dataToDownload = [...displayData];
       }
       // now, check columns:
       if (options.downloadOptions.filterOptions.useDisplayedColumnsOnly) {
-        columnsToDownload = columns.filter((_, index) => _.display==='true');
+        columnsToDownload = columns.filter((_, index) => _.display === 'true');
 
         dataToDownload = dataToDownload.map(row => {
-          row.data = row.data.filter((_, index) => columns[index].display==='true');
+          row.data = row.data.filter((_, index) => columns[index].display === 'true');
           return row;
         });
       }
+    }
+    if (expandedRows && expandedRows.data.length > 0) {
+      // Add complete data to the response to let users do whatever they want with the expanded data
+      expandedRows.data.map((row, index) => {
+        row.data = data[row.dataIndex].data;
+        return row;
+      });
+      dataToDownload.expandable = expandedRows;
     }
     createCSVDownload(columnsToDownload, dataToDownload, options);
   };

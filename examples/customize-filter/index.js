@@ -1,5 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import TableCell from '@material-ui/core/TableCell';
+import TableRow from '@material-ui/core/TableRow';
 import MUIDataTable from "../../src";
 
 class Example extends React.Component {
@@ -8,7 +10,7 @@ class Example extends React.Component {
 
     const columns = [
       {
-        name: "Name",
+        name: "name",
         options: {
           filter: true,
           display: 'excluded',
@@ -16,20 +18,20 @@ class Example extends React.Component {
       },
       {
         label: "Modified Title Label",
-        name: "Title",
+        name: "title",
         options: {
           filter: true,
         }
       },
       {
-        name: "Location",
+        name: "location",
         options: {
           print: false,
           filter: false,
         }
       },
       {
-        name: "Age",
+        name: "age",
         options: {
           filter: true,
           filterOptions: {
@@ -48,7 +50,7 @@ class Example extends React.Component {
         }
       },
       {
-        name: "Salary",
+        name: "salary",
         options: {
           filter: true,
           filterType: "checkbox",
@@ -64,11 +66,27 @@ class Example extends React.Component {
           },
           sort: false
         }
+      },
+      {
+        name: "phone.home",
+        label: "Phone"
+      },
+      {
+        name: "extra",
+        options: {
+          display: false,
+          viewColumns: false,
+          filter: false,
+          sort: false,
+          download: false,
+          print: false,
+          expandable: true
+        }
       }
     ];
 
 
-    const data = [
+    const data1 = [
       ["Gabby George", "Business Analyst", "Minneapolis", 30, "$100,000"],
       ["Aiden Lloyd", "Business Consultant", "Dallas", 55, "$200,000"],
       ["Jaden Collins", "Attorney", "Santa Ana", 27, "$500,000"],
@@ -101,10 +119,105 @@ class Example extends React.Component {
       ["Mason Ray", "Computer Scientist", "San Francisco", 39, "$142,000"]
     ];
 
+
+    const data = [
+      { name: "Gabby George", title: "Business Analyst", location: "Minneapolis", age: 30, salary: "$100,000", phone: { home: '867-5309', cell: '123-4567' } },
+      { name: "Aiden Lloyd", title: "Business Consultant", location: "Dallas",  age: 55, salary: "$200,000", phone: { home: '867-5310', cell: '123-4568' }, 
+        /* extra: [
+        {id:1, name: "placement 1", location:"USA", age: 99, salary: "$123"},
+        {id:2, name: "placement X", location:"CO", age: 66, salary: "$456"}
+      ]*/ },
+      { name: "Jaden Collins", title: "Attorney", location: "Santa Ana", age: 27, salary: "$500,000", phone: { home: '867-5311', cell: '123-4569' }, extra: [
+        {id:5, name: "placement 2", location:"USA2", age: 99, salary: "$1234"},
+        {id:6, name: "placement Y", location:"CO2", age: 66, salary: "$4567"}
+      ] },
+      { name: "Franky Rees", title: "Business Analyst", location: "St. Petersburg", age: 22, salary: "$50,000", phone: { home: '867-5312', cell: '123-4569' } }
+    ];
+
     const options = {
       filter: true,
       filterType: 'dropdown',
       responsive: 'scroll',
+      expandableRows: true,
+      expandableRowsOnClick: false,
+      downloadOptions: {
+        filterOptions: {
+          useDisplayedColumnsOnly: true,
+          useDisplayedRowsOnly: true,
+        }
+      },
+      renderExpandableRow: (rowData) => {
+        const colSpan = rowData.length + 1;
+
+        // Placements of this row are located in the last column of this row
+        const data = rowData[rowData.length-1];
+        if(data && data.length>0) {
+          return (
+            <TableRow>
+              <TableCell colSpan={colSpan}>
+                {JSON.stringify(data)}
+              </TableCell>
+            </TableRow>
+          );          
+        }
+        return null;
+      },
+      onDownload: (buildHead, buildBody, columns, data) => {
+        // debugger;
+        // console.log(columns, data);
+        const csvHead = columns.reduce((soFar, col) => {
+          let name = col.name;
+          if (col.name==='toggle_play') {
+            name = 'Status';
+          } else if (col.name==='total_placement') {
+            name = 'Placements';
+          } else if (col.name==='platform_name') {
+            name = 'Platform';
+          } else {
+            name = col.name.charAt(0).toUpperCase() + col.name.slice(1);
+          }
+          return col.download ? `${soFar}"${name}",` : soFar;
+        }, '');
+
+        const csvBody = data.reduce((soFar, row) => {
+          const newRow = row.data
+            .filter((_, index) => columns[index].download)
+            .map((value, index) => {
+              if (index===0) {
+                return value.props && value.props['data-value'] ? 'active' : 'inactive';
+              } else if (index===1) {
+                return value.props ? value.props['data-value'] : value;
+              }
+              return value;
+            }).join('","');
+
+          if (data.expandable && data.expandable.lookup[row.dataIndex]) {
+            debugger;
+            const fullRowData = data.expandable.data.find(rowItem => {
+              return rowItem.dataIndex === row.dataIndex;
+            });
+
+            if (fullRowData && fullRowData.data && fullRowData.data[ fullRowData.data.length-1 ]) {
+              const expandedRows = fullRowData.data[ fullRowData.data.length-1 ].reduce((inner, expandRow) => {
+                const line = columns.reduce((tmp, col) => {
+                  const colName = col.name.toLowerCase();
+                  return expandRow[colName] ? `${tmp}"${expandRow[colName]}",` : `${tmp},`;
+                }, '');
+                return `${inner}${line.slice(0, -1)}\r\n`;
+              }, `"${newRow}"\r\n`);
+              return `${soFar}${expandedRows}`;              
+            }
+          }
+
+          // return line without expanded data:
+          return `${soFar}"${newRow}"\r\n`;
+
+        }, '');
+
+
+        // debugger;
+        return `${csvHead.slice(0, -1)}\r\n${csvBody.trim()}`;
+      }
     };
 
     return (
