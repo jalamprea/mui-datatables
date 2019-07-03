@@ -80,7 +80,6 @@ class Example extends React.Component {
           sort: false,
           download: false,
           print: false,
-          expandable: true
         }
       }
     ];

@@ -1119,6 +1119,7 @@ class MUIDataTable extends React.Component {
               columns={columns}
               displayData={displayData}
               data={data}
+              expandedRows={expandedRows}
               filterData={filterData}
               filterList={filterList}
               filterUpdate={this.filterUpdate}
